@@ -1,0 +1,32 @@
+# WebSocket Market Data Server (Python/Tornado)
+class MarketDataHandler(WebSocketHandler):
+    clients = set()
+
+    def open(self):
+        self.clients.add(self)
+        self.write_message({
+            'event': 'connected',
+            'timestamp': int(time.time())
+        })
+
+    def on_message(self, message):
+        try:
+            subscription = json.loads(message)
+            if 'subscribe' in subscription:
+                pair = subscription['subscribe']
+                self.stream_pair(pair)
+        except JSONDecodeError:
+            self.close()
+
+    def stream_pair(self, pair):
+        async def update_feed():
+            while True:
+                order_book = get_order_book(pair)
+                self.write_message({
+                    'bids': order_book.bids[:10],
+                    'asks': order_book.asks[:10],
+                    'last_price': get_last_trade(pair)
+                })
+                await asyncio.sleep(100)  # 100ms update interval
+
+        IOLoop.current().spawn_callback(update_feed)
