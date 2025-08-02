@@ -1,0 +1,16 @@
+-- PostgreSQL Schema for Exchange Core
+CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+    user_id BIGINT REFERENCES users(id),
+    pair VARCHAR(10) NOT NULL,
+    price DECIMAL(24,8) NOT NULL,
+    quantity DECIMAL(24,8) NOT NULL,
+    filled DECIMAL(24,8) DEFAULT 0,
+    side SMALLINT CHECK (side IN (0,1)), -- 0=Buy, 1=Sell
+    type SMALLINT, -- Market, Limit, Stop-Limit
+    status SMALLINT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_orders_pair_status ON orders(pair, status);
