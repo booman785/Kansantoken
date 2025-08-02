@@ -1,0 +1,22 @@
+// JWT Authentication Middleware (Node.js)
+const crypto = require('crypto');
+
+function createAPISignature(secret, message) {
+    return crypto
+        .createHmac('sha256', secret)
+        .update(message)
+        .digest('hex');
+}
+
+// Rate Limiter Configuration
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 300, // 300 requests per IP
+    handler: (req, res) => {
+        logSuspiciousActivity(req.ip);
+        res.status(429).json({ 
+            code: -1003, 
+            msg: 'Too many requests' 
+        });
+    }
+});
