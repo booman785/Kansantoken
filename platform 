@@ -1,0 +1,38 @@
+// Matching Engine Core (GoLang)
+package engine
+
+type OrderBook struct {
+    Bids []Order
+    Asks []Order
+}
+
+func (ob *OrderBook) Match(order Order) ([]Trade, error) {
+    // Implementation of price-time priority matching
+    var trades []Trade
+    if order.Side == Buy {
+        for i := 0; i < len(ob.Asks); i++ {
+            ask := ob.Asks[i]
+            if ask.Price > order.Price {
+                break
+            }
+            quantity := math.Min(ask.Quantity, order.Quantity)
+            trades = append(trades, Trade{
+                TakerOrderID: order.ID,
+                MakerOrderID: ask.ID,
+                Price:        ask.Price,
+                Quantity:     quantity,
+            })
+            // Update order quantities
+            order.Quantity -= quantity
+            ask.Quantity -= quantity
+            if ask.Quantity == 0 {
+                ob.Asks = append(ob.Asks[:i], ob.Asks[i+1:]...)
+                i--
+            }
+            if order.Quantity == 0 {
+                break
+            }
+        }
+    }
+    return trades, nil
+}
