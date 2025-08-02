@@ -1,0 +1,24 @@
+# Cold Wallet Management (Python)
+class ColdWalletManager:
+    def __init__(self):
+        self.hot_wallet_threshold = 100  # BTC
+        self.multisig_addresses = {}
+    
+    def create_multisig_address(self, currency):
+        # Generate 2-of-3 multisig address
+        public_keys = [generate_key() for _ in range(3)]
+        address = create_multisig(public_keys, 2)
+        self.multisig_addresses[currency] = address
+        return address
+
+    def auto_sweep(self, hot_wallet):
+        for currency, balance in hot_wallet.balances.items():
+            if balance > self.hot_wallet_threshold:
+                amount = balance - self.hot_wallet_threshold
+                self.transfer_to_cold(currency, amount)
+
+    def transfer_to_cold(self, currency, amount):
+        cold_address = self.multisig_addresses.get(currency)
+        # Initiate blockchain transaction
+        tx_hash = blockchain.send(hot_wallet.private_key, cold_address, amount)
+        log_audit_trail(tx_hash)
